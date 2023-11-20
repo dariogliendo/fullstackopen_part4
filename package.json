@@ -5,9 +5,14 @@
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
-    "test": "jest --verbose",
-    "dev": "nodemon index.js --inspect",
+    "start": "cross-env NODE_ENVT=production node index.js",
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand",
+    "dev": "cross-env NODE_ENV=dev nodemon index.js --inspect",
     "lint": "eslint ."
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "globalTeardown": "./tests/teardown.js"
   },
   "author": "",
   "license": "ISC",

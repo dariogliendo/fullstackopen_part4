@@ -56,11 +56,23 @@ const dummy = (blogPosts) => {
   return 1;
 };
 
+/**
+ * Calculates the total number of likes from a given array of blog posts.
+ *
+ * @param {Array} blogPosts - An array of blog post objects.
+ * @return {number} The total number of likes from all the blog posts.
+ */
 const totalLikes = (blogPosts) => blogPosts.reduce((acc, post) => {
   if (!post?.likes) return acc;
   return acc + post.likes;
 }, 0);
 
+/**
+ * Finds the favourite blog post based on the number of likes.
+ *
+ * @param {Array} blogPosts - An array of blog posts.
+ * @return {Object} The favourite blog post.
+ */
 const favouriteBlog = (blogPosts) => {
   let favourite;
 
@@ -71,6 +83,12 @@ const favouriteBlog = (blogPosts) => {
   return favourite;
 };
 
+/**
+ * Calculates the author with the most blogs.
+ *
+ * @param {Array} blogPosts - An array of blog post objects.
+ * @return {Object} The author object with the most blogs.
+ */
 const mostBlogs = (blogPosts) => {
   const authorsByQuantities = _.countBy(blogPosts, 'author');
   const mapped = Object.entries(authorsByQuantities).map((m) => ({
@@ -80,6 +98,12 @@ const mostBlogs = (blogPosts) => {
   return _.last(_.sortBy(mapped, 'blogs'));
 };
 
+/**
+ * Returns the author with the most likes based on a given array of blog posts.
+ *
+ * @param {Array} blogPosts - An array of blog posts.
+ * @return {Object} - The author with the most likes.
+ */
 const mostLikes = (blogPosts) => {
   const grouppedByAuthor = _.groupBy(blogPosts, 'author');
   const authorSummaries = [];
