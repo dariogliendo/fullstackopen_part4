@@ -59,6 +59,22 @@ describe("POST Method", () => {
     expect(blogsAfter).toHaveLength(helper.initialBlogs.length + 1)
   }, 10000)
 
+  test('if no likes are provided, defaults to 0', async () => {
+    const newBlog = {
+      title: "My name is Juan",
+      author: "Juan Gomez",
+      url: "http://www.google.com"
+    }
+
+    const result = await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+      
+    expect(result.body.likes).toBe(0)
+  })
+
   test('responds status 400 to missing url property', async () => {
     const newBlog = {
       title: "My name is Juan",
