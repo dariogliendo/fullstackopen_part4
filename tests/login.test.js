@@ -35,5 +35,29 @@ describe("Can use the login endpoint", () => {
       expect(response.body.username).toBe("testuser")
     expect(response.body.name).toBe("Test User")
   })
+
+  test("User with wrong password cannot login", async () => {
+    const response = await api
+      .post('/api/login')
+      .send({
+        username: "testuser",
+        password: "wrongpassword"
+      })
+      .expect(401)
+
+    expect(response.body.error).toContain("invalid username or password")
+  })
+
+  test("User with wrong username cannot login", async () => {
+    const response = await api
+      .post('/api/login')
+      .send({
+        username: "wronguser",
+        password: "pwdsecreta"
+      })
+      .expect(401)
+
+    expect(response.body.error).toContain("invalid username or password")
+  })
 })
 
