@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const supertest = require('supertest')
 const app = require('../index.js')
 const helper = require('../utils/blog_helper')
@@ -8,11 +9,28 @@ mongoose.set("bufferTimeoutMS", 60000)
 
 const api = supertest(app)
 
+let token = null
+let userId = null
+beforeAll(async () => {
+  await User.deleteMany({})
+  const userResponse = await api.post('/api/users')
+    .send({
+      username: 'root',
+      name: 'root',
+      password: 'sekret'
+    })
+  userId = userResponse.body.id
+  const loginResponse = await api.post('/api/login')
+    .send({ username: 'root', password: 'sekret' })
+  token = loginResponse.body.token
+})
+
 beforeEach(async () => {
   try {
     await Blog.deleteMany({})
     for (const blog of helper.initialBlogs) {
       let blogObject = new Blog(blog)
+      blog.user = userId
       await blogObject.save()
     }
 
@@ -50,6 +68,7 @@ describe("POST Method", () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
@@ -68,10 +87,11 @@ describe("POST Method", () => {
 
     const result = await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
-      
+
     expect(result.body.likes).toBe(0)
   })
 
@@ -84,6 +104,7 @@ describe("POST Method", () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(400)
 
@@ -101,12 +122,27 @@ describe("POST Method", () => {
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `Bearer ${token}`)
       .send(newBlog)
       .expect(400)
 
     const blogsAfter = await helper.blogsInDB()
 
     expect(blogsAfter).toHaveLength(helper.initialBlogs.length)
+  })
+
+  test('Request without a token is responded with status 401', async () => {
+    const newBlog = {
+      title: "My name is Juan",
+      author: "Juan Gomez",
+      url: "http://www.google.com",
+      likes: 0
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(401)
   })
 })
 
@@ -116,6 +152,7 @@ describe("DELETE Method", () => {
     const blogToDelete = inDb[0]
     await api
       .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .expect(204)
 
     const inDbAfter = await helper.blogsInDB()

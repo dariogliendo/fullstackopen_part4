@@ -1,6 +1,6 @@
 const blogsRoute = require('express').Router();
 const Blog = require('../models/blog');
-const User = require('../models/user');
+const middleware = require('../utils/middleware');
 
 blogsRoute.get('/', async (request, response, next) => {
   try {
@@ -11,17 +11,17 @@ blogsRoute.get('/', async (request, response, next) => {
   }
 });
 
-blogsRoute.post('/', async (request, response, next) => {
+blogsRoute.post('/', middleware.userExctractor, async (request, response, next) => {
   try {
     if (!request.body.title) return response.status(400).json({ error: 'title missing' });
     if (!request.body.url) return response.status(400).json({ error: 'url missing' });
-    const users = await User.find({});
+    const authorUser = request.user
     const blog = new Blog(request.body);
-    const authorUser = users[Math.floor(Math.random() * users.length)];
 
     blog.user = authorUser._id;
 
     const result = await blog.save();
+    if (!authorUser.blogs) authorUser.blogs = []
     authorUser.blogs = [...authorUser.blogs, result._id];
     await authorUser.save();
     response.status(201).json(result);
@@ -30,9 +30,12 @@ blogsRoute.post('/', async (request, response, next) => {
   }
 });
 
-blogsRoute.delete('/:id', async (request, response, next) => {
+blogsRoute.delete('/:id', middleware.userExctractor, async (request, response, next) => {
   try {
-    await Blog.findByIdAndRemove(request.params.id);
+    const blog = await Blog.findById(request.params.id);
+    if (!blog) return response.status(404).json({ error: 'blog not found' });
+    if (!blog.user.equals(request.user._id)) return response.status(401).json({ error: 'Unauthorized' });
+    await Blog.findByIdAndDelete(request.params.id);
     response.status(204).end();
   } catch (error) {
     next(error);
